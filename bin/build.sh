@@ -1,0 +1,1 @@
+echo "======================Start build project VTC Splay=======================";mvn clean install;echo "======================Build Success===============================";

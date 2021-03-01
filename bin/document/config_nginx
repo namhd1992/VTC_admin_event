@@ -1,0 +1,240 @@
+upstream adb_domain {
+    server 127.0.0.1:3000;
+    keepalive 8;
+}
+
+upstream news_domain {
+    server 127.0.0.1:3001;
+    keepalive 8;
+}
+
+upstream api_domain {
+    server 127.0.0.1:8080;
+    keepalive 8;
+}
+
+
+upstream webhook_domain {
+    server 127.0.0.1:9003;
+    keepalive 8;
+}
+
+
+
+# the nginx server instance
+server {
+	listen 80;
+    server_name league.vn;
+    access_log /var/log/nginx/league.vn.log;
+    root /home/phucnguyen/vtc_landingpage;
+	location / {
+    		index index.html;
+	}
+ }
+
+#domain adb.league.vn
+server {
+        listen       80;
+        server_name  adb.league.vn;
+        rewrite ^ https://$http_host$request_uri? permanent;    # force redirect http to https
+    }
+server {
+        listen 443;
+        ssl on;
+        ssl_certificate /home/phucnguyen/admin_panel/vtc_admin_dashboard/ssl/certificate.crt;        # path to your cacert.pem
+        ssl_certificate_key /home/phucnguyen/admin_panel/vtc_admin_dashboard/ssl/private.key;
+        server_name adb.league.vn;
+        proxy_set_header X-Forwarded-For $remote_addr;
+
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
+        server_tokens off;
+
+        location / {
+            fastcgi_pass    127.0.0.1:3000;
+            fastcgi_param   SCRIPT_FILENAME     $document_root$fastcgi_script_name;
+            fastcgi_param   PATH_INFO           $fastcgi_script_name;
+            fastcgi_param   SERVER_PROTOCOL        $server_protocol;
+            fastcgi_param   QUERY_STRING        $query_string;
+            fastcgi_param   REQUEST_METHOD      $request_method;
+            fastcgi_param   CONTENT_TYPE        $content_type;
+            fastcgi_param   CONTENT_LENGTH      $content_length;
+            fastcgi_param   SERVER_ADDR         $server_addr;
+            fastcgi_param   SERVER_PORT         $server_port;
+            fastcgi_param   SERVER_NAME         $server_name;
+            fastcgi_param   REMOTE_ADDR         $remote_addr;
+            fastcgi_param   HTTPS               on;
+            fastcgi_param   HTTP_SCHEME         https;
+
+            access_log      /var/log/nginx/adb.league.vn.access.log;
+            error_log       /var/log/nginx/adb.league.vn.error.log;
+            fastcgi_read_timeout 36000;
+            client_max_body_size 0;
+            proxy_pass http://127.0.0.1:3000;
+        }
+}
+
+#domain news.league.vn
+server {
+    listen 0.0.0.0:80;
+    server_name league.vn news.league.vn;
+    access_log /var/log/nginx/news.league.log;
+
+    # pass the request to the node.js server with the correct headers
+    # and much more can be added, see nginx config options
+    location / {
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header Host $http_host;
+      proxy_set_header X-NginX-Proxy true;
+
+      proxy_pass http://news_domain/;
+      proxy_redirect off;
+    }
+ }
+
+#domain baogame.vn
+server {
+    listen 0.0.0.0:80;
+    server_name baogame.vn;
+    access_log /var/log/nginx/baogame.log;
+
+    # pass the request to the node.js server with the correct headers
+    # and much more can be added, see nginx config options
+    location / {
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header Host $http_host;
+      proxy_set_header X-NginX-Proxy true;
+
+      proxy_pass http://news_domain/;
+      proxy_redirect off;
+    }
+ }
+
+#webhook
+server {
+        listen       80;
+        server_name  webhook.league.vn;
+        rewrite ^ https://$http_host$request_uri? permanent;    # force redirect http to https
+    }
+server {
+        listen 443;
+        ssl on;
+        ssl_certificate /home/phucnguyen/webhook_giftcode/ssl_cert/webhook_gamerid_vn.crt;        # path to your cacert.pem
+        ssl_certificate_key /home/phucnguyen/webhook_giftcode/ssl_cert/server.key;    # path to your privkey.pem
+        server_name webhook.league.vn;
+        proxy_set_header X-Forwarded-For $remote_addr;
+
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
+        server_tokens off;
+
+        location / {
+            fastcgi_pass    127.0.0.1:9003;
+            fastcgi_param   SCRIPT_FILENAME     $document_root$fastcgi_script_name;
+            fastcgi_param   PATH_INFO           $fastcgi_script_name;
+
+            fastcgi_param   SERVER_PROTOCOL        $server_protocol;
+            fastcgi_param   QUERY_STRING        $query_string;
+            fastcgi_param   REQUEST_METHOD      $request_method;
+            fastcgi_param   CONTENT_TYPE        $content_type;
+            fastcgi_param   CONTENT_LENGTH      $content_length;
+            fastcgi_param   SERVER_ADDR         $server_addr;
+            fastcgi_param   SERVER_PORT         $server_port;
+            fastcgi_param   SERVER_NAME         $server_name;
+            fastcgi_param   REMOTE_ADDR         $remote_addr;
+            fastcgi_param   HTTPS               on;
+            fastcgi_param   HTTP_SCHEME         https;
+
+            access_log      /var/log/nginx/webhook.league.vn.access.log;
+            error_log       /var/log/nginx/webhook.league.vn.error.log;
+            fastcgi_read_timeout 36000;
+            client_max_body_size 0;
+	    proxy_pass http://127.0.0.1:9003;
+        }
+}
+
+#domain api.league.vn
+server {
+        listen       80;
+        server_name  api.league.vn;
+        rewrite ^ https://$http_host$request_uri? permanent;    # force redirect http to https
+    }
+server {
+        listen 443;
+	ssl on;
+        ssl_certificate /root/league-gateway/vtcgw_gamerid_v1.0/ssl_cert/AddTrustExternalCARoot.crt;
+        ssl_certificate /root/league-gateway/vtcgw_gamerid_v1.0/ssl_cert/COMODORSAAddTrustCA.crt;
+        ssl_certificate /root/league-gateway/vtcgw_gamerid_v1.0/ssl_cert/COMODORSADomainValidationSecureServerCA.crt;
+        ssl_certificate /root/league-gateway/vtcgw_gamerid_v1.0/ssl_cert/api_league_vn.crt;
+        ssl_certificate_key /root/league-gateway/vtcgw_gamerid_v1.0/ssl_cert/private.key;
+        server_name api.league.vn;
+        proxy_set_header X-Forwarded-For $remote_addr;
+
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
+        server_tokens off;
+
+        location / {
+            fastcgi_pass    127.0.0.1:8080;
+            fastcgi_param   SCRIPT_FILENAME     $document_root$fastcgi_script_name;
+            fastcgi_param   PATH_INFO           $fastcgi_script_name;
+
+            fastcgi_param   SERVER_PROTOCOL        $server_protocol;
+            fastcgi_param   QUERY_STRING        $query_string;
+            fastcgi_param   REQUEST_METHOD      $request_method;
+            fastcgi_param   CONTENT_TYPE        $content_type;
+            fastcgi_param   CONTENT_LENGTH      $content_length;
+            fastcgi_param   SERVER_ADDR         $server_addr;
+            fastcgi_param   SERVER_PORT         $server_port;
+            fastcgi_param   SERVER_NAME         $server_name;
+            fastcgi_param   REMOTE_ADDR         $remote_addr;
+            fastcgi_param   HTTPS               on;
+            fastcgi_param   HTTP_SCHEME         https;
+
+            access_log      /var/log/nginx/api.league.vn.access.log;
+            error_log       /var/log/nginx/api.league.vn.error.log;
+            fastcgi_read_timeout 36000;
+            client_max_body_size 0;
+            proxy_pass http://127.0.0.1:8080;
+        }
+}
+
+#domain dev.league.vn
+server {
+        listen       80;
+        server_name  dev.league.vn;
+        rewrite ^ https://$http_host$request_uri? permanent;    # force redirect http to https
+    }
+server {
+        listen 443;
+        ssl on;
+        ssl_certificate /home/phucnguyen/vtcgw_gamerid_v1.0/ssl_cert/certificate_dev.crt;        # path to your cacert.pem
+        ssl_certificate_key /home/phucnguyen/vtcgw_gamerid_v1.0/ssl_cert/private_dev.key;    # path to your privkey.pem
+        server_name dev.league.vn;
+        proxy_set_header X-Forwarded-For $remote_addr;
+
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
+        server_tokens off;
+
+        location / {
+            fastcgi_pass    127.0.0.1:9004;
+            fastcgi_param   SCRIPT_FILENAME     $document_root$fastcgi_script_name;
+            fastcgi_param   PATH_INFO           $fastcgi_script_name;
+            fastcgi_param   SERVER_PROTOCOL        $server_protocol;
+            fastcgi_param   QUERY_STRING        $query_string;
+            fastcgi_param   REQUEST_METHOD      $request_method;
+            fastcgi_param   CONTENT_TYPE        $content_type;
+            fastcgi_param   CONTENT_LENGTH      $content_length;
+            fastcgi_param   SERVER_ADDR         $server_addr;
+            fastcgi_param   SERVER_PORT         $server_port;
+            fastcgi_param   SERVER_NAME         $server_name;
+            fastcgi_param   REMOTE_ADDR         $remote_addr;
+            fastcgi_param   HTTPS               on;
+            fastcgi_param   HTTP_SCHEME         https;
+
+            access_log      /var/log/nginx/dev.league.vn.access.log;
+            error_log       /var/log/nginx/dev.league.vn.error.log;
+            fastcgi_read_timeout 36000;
+            client_max_body_size 0;
+            proxy_pass http://127.0.0.1:9004;
+        }
+}

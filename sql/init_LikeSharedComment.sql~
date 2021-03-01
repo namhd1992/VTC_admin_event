@@ -1,0 +1,61 @@
+CREATE TABLE `vtc_gamerid`.`tblLike` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `newsId` INT NULL,
+  `userId` INT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_tblLike_1_idx` (`newsId` ASC),
+  INDEX `fk_tblLike_2_idx` (`userId` ASC),
+  CONSTRAINT `fk_tblLike_1`
+    FOREIGN KEY (`newsId`)
+    REFERENCES `vtc_gamerid`.`tblNewsOverview` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_tblLike_2`
+    FOREIGN KEY (`userId`)
+    REFERENCES `vtc_gamerid`.`tblUserInfo` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+
+CREATE TABLE `vtc_gamerid`.`tblComment` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `newsId` INT NULL,
+  `userId` INT NULL,
+  `content` VARCHAR(10000) NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_tblComment_1_idx` (`newsId` ASC),
+  INDEX `fk_tblComment_2_idx` (`userId` ASC),
+  CONSTRAINT `fk_tblComment_1`
+    FOREIGN KEY (`newsId`)
+    REFERENCES `vtc_gamerid`.`tblNewsOverview` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_tblComment_2`
+    FOREIGN KEY (`userId`)
+    REFERENCES `vtc_gamerid`.`tblUserInfo` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+
+CREATE TABLE `vtc_gamerid`.`tblShare` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `newsId` INT NULL,
+  `userId` INT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_tblShare_1_idx` (`newsId` ASC),
+  INDEX `fk_tblShare_2_idx` (`userId` ASC),
+  CONSTRAINT `fk_tblShare_1`
+    FOREIGN KEY (`newsId`)
+    REFERENCES `vtc_gamerid`.`tblNewsOverview` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_tblShare_2`
+    FOREIGN KEY (`userId`)
+    REFERENCES `vtc_gamerid`.`tblUserInfo` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+
+    ALTER TABLE `vtc_gamerid`.`tblNewsOverview`
+ADD COLUMN `numberShare` INT NULL DEFAULT 0 AFTER `score`,
+ADD COLUMN `numberComment` INT NULL DEFAULT 0 AFTER `numberShare`;
+ALTER TABLE `vtc_gamerid`.`tblComment`
+ADD COLUMN `createOn` DATETIME NULL AFTER `content`;
+
